@@ -12,7 +12,8 @@ const Todo = mongoose.model("Todo", {
 //graphql schema
 const typeDefs = `
   type Query {
-    hello(name: String): String!
+    hello(name: String): String!,
+    todos:[Todo]
   }
   type Todo {
       id: ID!
@@ -20,19 +21,30 @@ const typeDefs = `
       complete: Boolean!
   }
   type Mutation{
-      createTodo(text: String!):Todo
+      createTodo(text: String!):Todo,
+      updateTodo(id: ID!, complete: Boolean!):Boolean,
+      deleteTodo(id: ID!):Boolean
   }
 `
 
 const resolvers = {
     Query: {
         hello: (_, { name }) => `Hello ${name || 'World'}`,
+        todos: () => Todo.find()
     },
     Mutation: {
         createTodo: async (_, { text }) => {
             const todo = new Todo({ text, complete: false });
             await todo.save();
             return todo;
+        },
+        updateTodo: async (_, { id, complete }) => {
+            await Todo.findByIdAndUpdate(id, { complete });
+            return true;
+        },
+        deleteTodo: async (_, { id }) => {
+            await Todo.findByIdAndDelete(id);
+            return true;
         }
     }
 }
